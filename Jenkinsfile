@@ -1,36 +1,32 @@
-
 pipeline {
-    // Pipeline'ın çalışacağı Jenkins agent'ını etiketine göre seçiyoruz.
     agent {
         label 'Jenkins-Agent'
     }
-    // Pipeline boyunca geçerli olacak ortam değişkenlerini ayarlıyoruz.
+
+    // Pipeline seçeneklerini burada tanımlıyoruz
+    options {
+        // Her build öncesi workspace'i otomatik olarak temizle
+        cleanWs() 
+    }
+
     environment {
         APP_NAME = "devops-03-pipeline-aws-gitops"
     }
+
     stages {
-        // 0. WORKSPACE TEMİZLİĞİ: Her build öncesi Jenkins workspace'ini temizler.
-        stage('Cleanup Workspace') {
-            steps {
-                script {
-                    cleanws()
-                }
-            }
-        }
-        
-        // 1. KODU GITHUB'DAN ÇEKME: Projenin en güncel kodunu 'main' branch'inden çeker.
+        // ARTIK BU STAGE'E İHTİYAÇ YOK
+        // stage('Cleanup Workspace') { ... }
+
+        // 1. KODU GITHUB'DAN ÇEKME
         stage('SCM GitHub') {
             steps {
                 script {
-                    sh """
-                        echo 'STAGE BAŞLIYOR: SCM GitHub ✅'
-                    """
+                    sh "echo 'STAGE BAŞLIYOR: SCM GitHub ✅'"
                     checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/celalettinaksoy/devops-03-pipeline-aws-gitops']])
-                    sh """
-                        echo 'STAGE TAMAMLANDI: SCM GitHub 🎉'
-                    """
+                    sh "echo 'STAGE TAMAMLANDI: SCM GitHub 🎉'"
                 }
             }
         }
+        // ... 
     }
-}    
+}
