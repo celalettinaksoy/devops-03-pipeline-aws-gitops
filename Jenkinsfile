@@ -3,21 +3,20 @@ pipeline {
         label 'Jenkins-Agent'
     }
 
-    // Pipeline seçeneklerini burada tanımlıyoruz
-    options {
-        // Her build öncesi workspace'i otomatik olarak temizle
-        cleanWs() 
-    }
-
     environment {
         APP_NAME = "devops-03-pipeline-aws-gitops"
     }
 
     stages {
-        // ARTIK BU STAGE'E İHTİYAÇ YOK
-        // stage('Cleanup Workspace') { ... }
+        // 1. AŞAMA: WORKSPACE TEMİZLİĞİ
+        stage('Cleanup Workspace') {
+            steps {
+                // Mevcut dizindeki her şeyi siler
+                deleteDir()
+            }
+        }
 
-        // 1. KODU GITHUB'DAN ÇEKME
+        // 2. AŞAMA: KODU GITHUB'DAN ÇEKME
         stage('SCM GitHub') {
             steps {
                 script {
@@ -27,6 +26,6 @@ pipeline {
                 }
             }
         }
-        // ... 
+        // ... diğer stage'leriniz ...
     }
 }
