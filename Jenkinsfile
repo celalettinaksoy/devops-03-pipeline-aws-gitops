@@ -5,7 +5,6 @@ pipeline {
 
     environment {
         APP_NAME = "devops-03-pipeline-aws-gitops"
-        // DÜZELTME 1: IMAGE_TAG değişkeni build numarası olarak tanımlandı.
         IMAGE_TAG = "${BUILD_NUMBER}" 
     }
 
@@ -13,7 +12,6 @@ pipeline {
         // 1. AŞAMA: WORKSPACE TEMİZLİĞİ
         stage('Cleanup Workspace') {
             steps {
-                // Mevcut dizindeki her şeyi siler
                 deleteDir()
             }
         }
@@ -35,7 +33,8 @@ pipeline {
                     echo "--- deployment.yaml ÖNCE ---"
                     cat deployment.yaml
 
-                    // IMAGE_TAG değişkeni artık Jenkins build numarasını kullanacak
+                    # DÜZELTME: Yorum satırı '#' ile değiştirildi.
+                    # IMAGE_TAG değişkeni artık Jenkins build numarasını kullanacak
                     sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g'        deployment.yaml
                 
                     echo "--- deployment.yaml SONRA ---"
@@ -53,7 +52,6 @@ pipeline {
                     git commit -m "Updated Deployment Manifest to version ${IMAGE_TAG}"
                 """
                 withCredentials([gitUsernamePassword(credentialsId: 'github-token', gitToolName: 'Default')]) {
-                    // DÜZELTME 2: Push yapılan repo adresi checkout yapılanla aynı olacak şekilde düzeltildi.
                     sh "git push https://github.com/celalettinaksoy/devops-03-pipeline-aws-gitops main"
                 }
             }
