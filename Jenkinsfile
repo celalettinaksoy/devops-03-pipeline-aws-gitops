@@ -5,6 +5,8 @@ pipeline {
 
     environment {
         APP_NAME = "devops-03-pipeline-aws-gitops"
+        // DÜZELTME 1: IMAGE_TAG değişkeni build numarası olarak tanımlandı.
+        IMAGE_TAG = "${BUILD_NUMBER}" 
     }
 
     stages {
@@ -25,16 +27,19 @@ pipeline {
                     sh "echo 'STAGE TAMAMLANDI: SCM GitHub 🎉'"
                 }
             }
+        }
 
         stage("Update the Deployment Tags") {
             steps {
-                
                 sh """
-                   cat deployment.yaml
+                    echo "--- deployment.yaml ÖNCE ---"
+                    cat deployment.yaml
 
-                   sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g'           deployment.yaml
-               
-                   cat deployment.yaml
+                    // IMAGE_TAG değişkeni artık Jenkins build numarasını kullanacak
+                    sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g'        deployment.yaml
+                
+                    echo "--- deployment.yaml SONRA ---"
+                    cat deployment.yaml
                 """
             }
         }
@@ -42,13 +47,14 @@ pipeline {
         stage("Push the changed deployment file to Git") {
             steps {
                 sh """
-                   git config --global user.name "mimaraslan"
-                   git config --global user.email "mimaraslan@gmail.com"
-                   git add deployment.yaml
-                   git commit -m "Updated Deployment Manifest"
+                    git config --global user.name "celalettinaksoy"
+                    git config --global user.email "celalettinaksoy@gmail.com"
+                    git add deployment.yaml
+                    git commit -m "Updated Deployment Manifest to version ${IMAGE_TAG}"
                 """
-                withCredentials([gitUsernamePassword(credentialsId: 'github', gitToolName: 'Default')]) {
-                  sh "git push https://github.com/floryos/devops-03-pipeline-aws-gitops main"
+                withCredentials([gitUsernamePassword(credentialsId: 'github-token', gitToolName: 'Default')]) {
+                    // DÜZELTME 2: Push yapılan repo adresi checkout yapılanla aynı olacak şekilde düzeltildi.
+                    sh "git push https://github.com/celalettinaksoy/devops-03-pipeline-aws-gitops main"
                 }
             }
         }
