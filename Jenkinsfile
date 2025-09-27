@@ -62,7 +62,7 @@ stage("Push the changed deployment file to Git") {
                 git config user.email "celalettinaksoyy@gmail.com"
 
 # (opsiyonel) detached HEAD ise branch'e geç
-                git checkout -B master origin/master || true
+                git checkout -B main origin/main || true
 
                 git add deployment.yaml || true
 
