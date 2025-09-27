@@ -1,60 +1,87 @@
 pipeline {
     agent {
-        label 'Jenkins-Agent'
+        node {
+            label 'Jenkins-Agent'
+        }
     }
+    //agent any
 
     environment {
-        APP_NAME = "devops-03-pipeline-aws-gitops"
-        IMAGE_TAG = "${BUILD_NUMBER}" 
+        APP_NAME = "devops-03-pipeline-aws"
     }
 
-    stages {
-        // 1. AŞAMA: WORKSPACE TEMİZLİĞİ
-        stage('Cleanup Workspace') {
-            steps {
-                deleteDir()
-            }
-        }
 
-        // 2. AŞAMA: KODU GITHUB'DAN ÇEKME
-        stage('SCM GitHub') {
+
+    stages {
+
+
+     stage('Cleanup Workspace') {
             steps {
                 script {
-                    sh "echo 'STAGE BAŞLIYOR: SCM GitHub ✅'"
-                    checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/celalettinaksoy/devops-03-pipeline-aws-gitops']])
-                    sh "echo 'STAGE TAMAMLANDI: SCM GitHub 🎉'"
+                    cleanWs()
                 }
             }
         }
 
-        stage("Update the Deployment Tags") {
-            steps {
-                sh """
-                    echo "--- deployment.yaml ÖNCE ---"
-                    cat deployment.yaml
 
-                    # DÜZELTME: Yorum satırı '#' ile değiştirildi.
-                    # IMAGE_TAG değişkeni artık Jenkins build numarasını kullanacak
-                    sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g'        deployment.yaml
-                
-                    echo "--- deployment.yaml SONRA ---"
-                    cat deployment.yaml
-                """
+        stage('SCM GitHub') {
+            steps {
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/floryos/devops-03-pipeline-aws-gitops']])
             }
         }
 
-        stage("Push the changed deployment file to Git") {
-            steps {
-                sh """
-                    git config --global user.name "celalettinaksoy"
-                    git config --global user.email "celalettinaksoy@gmail.com"
-                    git add deployment.yaml
-                    git commit -m "Updated Deployment Manifest to version ${IMAGE_TAG}"
-                """
-                withCredentials([gitUsernamePassword(credentialsId: 'github-token', gitToolName: 'Default')]) {
-                    sh "git push https://github.com/celalettinaksoy/devops-03-pipeline-aws-gitops main"
-                }
-            }
-        }
+
+
+
+stage("Update the Deployment Tags") {
+    steps {
+        sh """
+           echo "Before update:"
+           cat deployment.yaml
+
+           sed -i "s|\\(image: *floryos/devops-03-pipeline-aws:\\).*|\\1${IMAGE_TAG}|" deployment.yaml
+
+           echo "After update:"
+           cat deployment.yaml
+        """
+    }
+}
+
+
+stage("Push the changed deployment file to Git") {
+  steps {
+    withCredentials([usernamePassword(
+      credentialsId: 'github',             // Jenkins'teki ID (büyük/küçük harfe dikkat)
+      usernameVariable: 'GIT_USER',
+      passwordVariable: 'GIT_TOKEN'
+    )]) {
+      sh '''#!/usr/bin/env bash
+                set -euo pipefail
+
+                git config user.name  "celalettinaksoy"
+                git config user.email "celalettinaksoyy@gmail.com"
+
+# (opsiyonel) detached HEAD ise branch'e geç
+                git checkout -B master origin/master || true
+
+                git add deployment.yaml || true
+
+# değişiklik yoksa fail etme
+                if git diff --cached --quiet; then
+                    echo "No changes to commit."
+                exit 0
+                fi
+
+                git commit -m "Updated Deployment Manifest"
+
+# Token'ı URL'de kullan; Jenkins maskeler
+                git push "https://${GIT_USER}:${GIT_TOKEN}@github.com/floryos/devops-03-pipeline-aws-gitops" HEAD:main
+'''
+    }
+  }
+}
+
+
+
     }
 }
